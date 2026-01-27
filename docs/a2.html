@@ -3,16 +3,191 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, maximum-scale=1.0" />
-
-    <title>Example Student's HCDE 439 Physical Computing Page!</title>
+    
+    <title>Kai Atalig – Assignment 2: Fade!</title>
 
     <link href="style.css" rel="stylesheet" type="text/css" />
   </head>
   <body>
-    <h1>Example Student's Assignment 2!</h1>
+    <h1>Assignment 2: Fade!</h1>
     <div class="header">
-      <img src="red-panda.jpg" />
-      <p>Here is all the documentation for assignment 2!</p>
+      <p>
+        This page documents Assignment 2: Fade. The goal of this assignment
+        was to design a circuit with multiple LEDs, write Arduino firmware to make
+        at least one fade while the other blink independently at the push of a button
+        , and explain the design decisions behind the circuit.
+      </p>
+      <br><br>
+      <br><br>
     </div>
+
+    <!-- ===================== -->
+    <!-- Schematic Section -->
+    <!-- ===================== -->
+    <h2>Schematic</h2>
+    <img src="fadeschematic.webp" />
+    <p>
+      This schematic shows the logical layout of the circuit, including three LEDs 
+      connected to Arduino pins 9, 10, and 11, each with a current-limiting resistor.
+       A pushbutton connected to pin 2 uses a 10kΩ pull-down resistor to ensure a stable 
+       LOW signal when the button is not pressed.
+    </p>
+    <br><br>
+
+    <!-- ===================== -->
+    <!-- Circuit Photo Section -->
+    <!-- ===================== -->
+    <h2>Circuit on Breadboard</h2>
+    <img src="fadecircuit.webp" />
+    <p>
+    This image shows the physical implementation of the circuit on a breadboard. The wiring 
+    matches the schematic exactly, with LEDs connected in series with 220Ω resistors and a 
+    shared ground rail to ensure proper current flow and reliable operation.
+    </p>
+    <br><br>
+
+    <!-- ===================== -->
+    <!-- Arduino Code Section -->
+    <!-- ===================== -->
+    <h2>Arduino Firmware</h2>
+    <p>
+      Below is the Arduino code used to fade one LED while the others blink independently at 
+      the push of a button. Each line of code is commented to explain its function.
+    </p>
+    <pre>
+<code>
+// Define the pin for the fading LED
+int fadeLed = 9;
+
+// Define the pin for the second LED
+int led2 = 10;
+
+// Define the pin for the third LED
+int led3 = 11;
+
+// Define the pin for the button
+int buttonPin = 2;
+
+// Variable to store button state
+int buttonState = 0;
+
+void setup() {
+
+  // Set the fading LED pin as an output
+  pinMode(fadeLed, OUTPUT);
+
+  // Set the second LED pin as an output
+  pinMode(led2, OUTPUT);
+
+  // Set the third LED pin as an output
+  pinMode(led3, OUTPUT);
+
+  // Set the button pin as an input
+  pinMode(buttonPin, INPUT);
+}
+
+void loop() {
+
+  // Read the current state of the button
+  buttonState = digitalRead(buttonPin);
+
+  // Check if the button is pressed
+  if (buttonState == HIGH) {
+
+    // Fade the LED on pin 9 from off to on
+    for (int brightness = 0; brightness <= 255; brightness += 5) {
+
+      // Set the brightness of the fading LED
+      analogWrite(fadeLed, brightness);
+
+      // Turn on the second LED
+      digitalWrite(led2, HIGH);
+
+      // Turn off the third LED
+      digitalWrite(led3, LOW);
+
+      // Small delay to control fade speed
+      delay(20);
+    }
+
+    // Fade the LED on pin 9 from on to off
+    for (int brightness = 255; brightness >= 0; brightness -= 5) {
+
+      // Set the brightness of the fading LED
+      analogWrite(fadeLed, brightness);
+
+      // Turn off the second LED
+      digitalWrite(led2, LOW);
+
+      // Turn on the third LED
+      digitalWrite(led3, HIGH);
+
+      // Small delay to control fade speed
+      delay(20);
+    }
+  }
+
+  // If the button is not pressed
+  else {
+
+    // Turn off the fading LED
+    analogWrite(fadeLed, 0);
+
+    // Turn off the second LED
+    digitalWrite(led2, LOW);
+
+    // Turn off the third LED
+    digitalWrite(led3, LOW);
+  }
+}
+    </code>
+    </pre>
+
+    <!-- ===================== -->
+    <!-- Animated GIF Section -->
+    <!-- ===================== -->
+    <h2>Circuit Operation</h2>
+    <img src="fadegif.gif" />
+    <p>
+    This animation demonstrates the circuit in operation. When the button is pressed, 
+    one LED fades using PWM while the other LEDs turn on and off in sequence. 
+    Releasing the button turns all LEDs off.
+    </p>
+    <br><br>
+
+    <!-- ===================== -->
+    <!-- Voltage vs Time Graph -->
+    <!-- ===================== -->
+    <h2>Voltage vs. Time Graph</h2>
+    <img src="fadegraph.webp" />
+    <p>
+    This chart shows voltage across an LED over time for different PWM values. Lower 
+    analogWrite values result in lower average voltage due to reduced duty cycle, 
+    while analogWrite(255) produces a constant HIGH output.
+    </p>
+    <br><br>
+
+    <!-- ===================== -->
+    <!-- Additional Questions -->
+    <!-- ===================== -->
+    <h2>Additional Questions</h2>
+
+    <h3> If all your LEDs were on simultaneously, what would the total current draw be? 
+      Is this above or below the total Arduino current draw limits? If all your LEDs 
+      were on, how long would your circuit run if powered by a 1200 mAh battery?</h3>
+    <p>
+     3 LEDs would be roughly 60mA (20mA each). This is below the Arduino Uno's 
+     recommended maximum current draw of 200mA. With a 1200mAh battery the circuit
+     could run for approximately 20 hours (1200mAh / 60mA = 20 hours).
+    </p>
+    <br><br>
+
+    <h3>Measure and record the actual voltage across one of your LEDs when it's on. 
+      How does this compare to the theoretical forward voltage for your LED color?</h3>
+    <p>
+    Theoretical forward voltage ≈ 2.0–2.2V. Measured voltage likely slightly lower due 
+    to resistor tolerance. This is expected and normal
+    </p>
+
   </body>
 </html>
