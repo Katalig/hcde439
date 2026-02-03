@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, maximum-scale=1.0" />
+
+    <title>Kai Atalig – Assignment 3: Input Output!</title>
+
+    <link href="style.css" rel="stylesheet" type="text/css" />
+  </head>
+
+  <body>
+    <h1>Assignment 3: Input Output!</h1>
+
+    <div class="header">
+      <p>
+        This page documents Assignment 3. The goal of this project was to build a
+        circuit using a variable resistance sensor (photoresistor or thermistor)
+        in a voltage divider and use the sensor readings to control an output
+        device that is not a single LED. I used analogRead() to read the sensor,
+        map() to scale the input range into a PWM output range, and analogWrite()
+        to control the brightness of an LED output pattern. I also used an
+        if-statement to switch which LED responds based on the sensor value and
+        printed custom messages to the Serial Monitor for debugging and
+        visualization.
+      </p>
+      <br /><br />
+    </div>
+
+    <!-- ===================== -->
+    <!-- Schematic Section -->
+    <!-- ===================== -->
+    <h2>Schematic</h2>
+    <img src="a3schematic.webp" alt="Assignment 3 schematic" />
+    <p>
+      This schematic shows a voltage divider using a variable resistance sensor
+      and a fixed resistor. The analog pin reads the midpoint voltage (V-measure),
+      which changes depending on the sensor’s resistance. Two LEDs are connected
+      to PWM pins so the circuit can visualize the sensor reading with different
+      brightness levels.
+    </p>
+    <br /><br />
+
+    <!-- ===================== -->
+    <!-- Circuit Photo Section -->
+    <!-- ===================== -->
+    <h2>Circuit on Breadboard</h2>
+    <img src="a3circuit.webp" alt="Assignment 3 breadboard circuit" />
+    <p>
+      This image shows the physical breadboard circuit matching the schematic.
+      The sensor and resistor form the voltage divider feeding into A0, and the
+      two LEDs are wired with current-limiting resistors to PWM pins. All grounds
+      are connected to the shared ground rail to complete the circuit.
+    </p>
+    <br /><br />
+
+    <!-- ===================== -->
+    <!-- Arduino Code Section -->
+    <!-- ===================== -->
+    <h2>Arduino Firmware</h2>
+    <p>
+      Below is the Arduino code used to read the sensor voltage divider on A0 and
+      control two LEDs using PWM. The sensor value is mapped into a 0–255 range
+      for analogWrite(). An if-statement switches which LED is active based on
+      the sensor reading, and the Serial Monitor prints a custom status message.
+    </p>
+
+    <pre><code>
+// Assign readable names to the pins we are using in the circuit
+const int sensorPin = A0;      // Analog input pin connected to the sensor/voltage divider
+const int redLedPin = 10;       // PWM output pin connected to the red LED
+const int blueLedPin = 11;    // PWM output pin connected to the blue LED
+
+// Create variables to store the sensor reading and the PWM output level
+int sensorValue = 0;           // Stores the raw analogRead() value (0–1023)
+int pwmValue = 0;              // Stores the mapped PWM brightness value (0–255)
+
+void setup() {
+
+  // Start Serial Monitor so we can see what the sensor is doing
+  Serial.begin(9600);
+}
+
+void loop() {
+
+  // Read the sensor value from the analog input pin
+  sensorValue = analogRead(sensorPin);
+
+  // Convert the 10-bit sensor reading into an 8-bit PWM brightness value
+  pwmValue = map(sensorValue, 0, 1023, 0, 255);
+
+  // If the sensor reading is in the lower half of the range
+  if (sensorValue <= 512) {
+
+    // Print a message showing that the red LED is active
+    Serial.println("Red LED active (lower range)");
+
+    // Set the red LED brightness based on the mapped PWM value
+    analogWrite(redLedPin, pwmValue);
+
+    // Force the blue LED fully off so both LEDs are never on together
+    analogWrite(blueLedPin, 0);
+  }
+
+  // Otherwise the sensor reading is in the upper half of the range
+  else {
+
+    // Print a message showing that the blue LED is active
+    Serial.println("Blue LED active (upper range)");
+
+    // Force the red LED fully off so both LEDs are never on together
+    analogWrite(redLedPin, 0);
+
+    // Set the blue LED brightness based on the mapped PWM value
+    analogWrite(blueLedPin, pwmValue);
+  }
+
+  // Small delay to slow the loop down and make changes easier to observe
+  delay(10);
+}
+    </code></pre>
+
+    <br /><br />
+
+    <!-- ===================== -->
+    <!-- Animated GIF / Video Section -->
+    <!-- ===================== -->
+    <h2>Circuit Operation (GIF / Video)</h2>
+    <img src="a3gif.gif" alt="Assignment 3 circuit demo gif" />
+    <p>
+      This gif/video shows the circuit responding to changes in the sensor.
+      As the sensor resistance changes, the voltage divider output changes, which
+      updates the LED brightness using PWM. The if-statement switches which LED
+      turns on depending on whether the sensor reading is below or above the
+      midpoint threshold.
+    </p>
+    <br /><br />
+
+    <!-- ===================== -->
+    <!-- Serial Monitor Output -->
+    <!-- ===================== -->
+    <h2>Serial Monitor Output</h2>
+    <img src="a3serial.PNG" alt="Serial monitor output screenshot" />
+    <p>
+      This screenshot shows example output from the Serial Monitor. The printed
+      messages confirm which LED is active based on the sensor reading and help
+      verify that the circuit logic is working correctly.
+    </p>
+    <br /><br />
+
+    <!-- ===================== -->
+    <!-- Voltage vs Time Graph -->
+    <!-- ===================== -->
+    <h2>Voltage vs. Time Graph</h2>
+    <img src="a3graph.webp" alt="Voltage vs time graph" />
+    <p>
+      This graph shows how the measured voltage at V-measure changes over time as
+      the sensor is covered/uncovered (or heated/cooled). The Arduino reads this
+      changing voltage using analogRead(), which drives the output behavior.
+    </p>
+    <br /><br />
+
+    <!-- ===================== -->
+    <!-- Additional Questions -->
+    <!-- ===================== -->
+    <h2>Additional Questions</h2>
+
+    <h3>
+      In your voltage divider, can the variable resistor be either R1 or R2
+      or does it need to be one or the other? Justify your answer with example
+      calculations.
+    </h3>
+    <p>
+      The variable resistor can be placed as either R1 (top) or R2 (bottom), but
+      it changes how Vout responds. If the sensor is R1 (top), Vout increases
+      when the sensor resistance decreases. If the sensor is R2 (bottom), Vout
+      increases when the sensor resistance increases. Both are valid, but the
+      choice affects whether your readings rise or fall with the physical change.
+    </p>
+    <br /><br />
+    <h3>
+      AnalogWrite and analogRead are respectively 8-bit and 10-bit values.
+      Imagine you had 10-bit PWM and a 16-bit analog-to-digital converter
+      instead. How would this change your map() code? Explain your answer.
+    </h3>
+    <p>
+      With a 16-bit ADC, analogRead would return values from 0–65535 instead of
+      0–1023. With 10-bit PWM, analogWrite would accept values from 0–1023
+      instead of 0–255. The map() function would change to:
+      <br />
+      map(sensorValue, 0, 65535, 0, 1023)
+      <br />
+      This would allow finer precision in both reading sensor changes and
+      controlling output brightness.
+    </p>
+
+    <br /><br />
+  </body>
+</html>
