@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, maximum-scale=1.0" />
+    
+    <title>Kai Atalig – Assignment 4: Libraries!</title>
+
+    <link href="style.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body>
+    <h1>Assignment 4: Libraries!</h1>
+    <div class="header">
+      <p>
+        This page documents Assignment 4: Libraries. The goal of this assignment
+        was to use Arduino libraries to create a system that incorperates 2 different 
+        sensors to control an output.
+      </p>
+      <br><br>
+      <br><br>
+    </div>
+
+    <!-- ===================== -->
+    <!-- Schematic Section -->
+    <!-- ===================== -->
+    <h2>Schematic</h2>
+    <img src="a4schematic.webp" />
+    <p>
+    This schematic shows the Arduino connected to a joystick for analog input, 
+    a pushbutton for speed selection, and a servo motor driven using the Servo library. 
+    The joystick forms a voltage divider so the Arduino can read a changing voltage 
+    that determines movement direction, while the button uses the internal pull-up resistor 
+    to detect presses. The servo signal line is connected to pin 9 to receive position commands.
+    </p>
+    <br><br>
+
+    <!-- ===================== -->
+    <!-- Circuit Photo Section -->
+    <!-- ===================== -->
+    <h2>Circuit on Breadboard</h2>
+    <img src="a4circuit.webp" />
+    <p>
+    This image shows the physical implementation of the circuit on a breadboard. The joystick 
+    is wired between 5V and ground with its wiper connected to A0, allowing variable readings 
+    based on knob rotation. The pushbutton connects to pin 2 and ground using the Arduino’s 
+    internal pull-up configuration, and the servo motor is powered and controlled from the board. 
+    All components share a common ground reference.
+    </p>
+    <br><br>
+
+    <!-- ===================== -->
+    <!-- Arduino Code Section -->
+    <!-- ===================== -->
+    <h2>Arduino Firmware</h2>
+    <p>
+      Below is the Arduino code using the Servo library. Each line of
+      code is commented to explain its function.
+    </p>
+    <pre>
+<code>
+#include <Servo.h>                  // Include servo control library
+
+Servo myservo;                      // Create servo object instance
+
+int potpin = A0;                    // Analog input pin for joystick
+int buttonPin = 2;                  // Digital input pin for pushbutton
+
+int sensorVal = 0;                  // Variable to store joystick reading
+int servoPos = 90;                  // Track current servo position (start centered)
+
+int speedMode = 1;                  // Current mode
+int lastButtonState = HIGH;         // Store previous button state for edge detection
+
+int threshold = 50;                 // Dead zone around center to stop jitter
+
+void setup() {
+
+  // Attach servo control wire to pin 9
+  myservo.attach(9);
+
+  // Configure button pin to use internal pull-up resistor
+  pinMode(buttonPin, INPUT_PULLUP);
+
+  // Move servo to initial center position
+  myservo.write(servoPos);
+}
+
+void loop() {
+
+  // Read the current button state
+  int buttonState = digitalRead(buttonPin);
+
+  // Detect new button press transition
+  if (buttonState == LOW && lastButtonState == HIGH) {
+
+    // Advance to next speed mode
+    speedMode++;
+
+    // Wrap mode back to OFF after last option
+    if (speedMode > 3) {
+      speedMode = 0;
+    }
+
+    // Delay to debounce the button press
+    delay(200);
+  }
+
+  // Save button state for next loop comparison
+  lastButtonState = buttonState;
+
+  // Read value for direction control
+  sensorVal = analogRead(potpin);
+
+  // Variable to determine movement step size
+  int stepSize = 0;
+
+  // Assign step size based on active speed mode
+  if (speedMode == 1) {
+    stepSize = 1;                   // Normal speed
+  }
+  else if (speedMode == 2) {
+    stepSize = 2;                   // Double speed
+  }
+  else if (speedMode == 3) {
+    stepSize = 5;                   // Five times speed
+  }
+  else {
+    stepSize = 0;                   // OFF mode disables motion
+  }
+
+  // Increase position if forward direction
+  if (sensorVal > 512 + threshold) {
+    servoPos += stepSize;
+  }
+
+  // Decrease position if reverse direction
+  else if (sensorVal < 512 - threshold) {
+    servoPos -= stepSize;
+  }
+
+  // Constrain servo movement within valid range
+  servoPos = constrain(servoPos, 0, 180);
+
+  // Send updated position command to servo
+  myservo.write(servoPos);
+
+  // Small delay to smooth movement
+  delay(20);
+}
+    </code>
+    </pre>
+
+    <!-- ===================== -->
+    <!-- Animated GIF Section -->
+    <!-- ===================== -->
+    <h2>Circuit Operation</h2>
+    <img src="a4gif.gif" />
+    <p>
+    This animated GIF demonstrates the circuit in operation. Rotating the joystick 
+    causes the servo motor to move continuously in the corresponding direction, and 
+    pressing the button changes how quickly the motion occurs.
+    </p>
+    <br><br>
+
+    <!-- ===================== -->
+    <!-- Additional Questions -->
+    <!-- ===================== -->
+    <h2>Additional Questions</h2>
+
+    <h3>Voltage vs. Time Graph</h3>
+    <p>
+    Say you are using a servo motor you attach to pin 9. In your loop() you have the following code:<br>
+      void loop() {<br>
+      for (pos = 0; pos <= 180; pos += 1) {<br>
+        myservo.write(pos);<br> 
+        delay(100); <br>
+        }<br>
+      }<br>
+    Draw a graph with the x-axis as time and the y-axis as voltage at pin 9 with respect to ground.
+    </p>
+    <img src="a4graph.webp" />
+    <br><br>
+
+    <h3>broken input device?</h3>
+    <p>
+    Your input device is slightly broken, leading it to give us an erroneous 
+    reading 1% of the time. How can we address this?<br><br>
+
+    Since the errors are rare, we can reduce their impact by validating or 
+    filtering the input. One approach is to take multiple readings in quick 
+    succession and compare them. If one reading differs significantly from the 
+    others, it can be discarded and replaced with a more consistent value. 
+    Another option is to ignore sudden unrealistic jumps compared to the previous 
+    value and require confirmation from additional readings before accepting a 
+    change. 
+    </p>
+    <br><br>
+
+    <h3>noisy input device?</h3>
+    <p>
+    Your input device is slightly noisy, leading the measurement to randomly 
+    deviate from the true measurement up or down by 10%. How can we address 
+    this?<br><br>
+
+    This type of error is continuous small fluctuation rather than rare outliers, 
+    so smoothing techniques are appropriate. We can reduce noise by averaging 
+    multiple samples over time  or applying a filter that gradually updates the 
+    output instead of reacting instantly to each measurement.
+    </p>
+
+  </body>
+</html>
