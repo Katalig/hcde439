@@ -4,17 +4,19 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, maximum-scale=1.0" />
     
-    <title>Kai Atalig – Assignment 1: Blink!</title>
+    <title>Kai Atalig – Assignment 5: Transistors!</title>
 
     <link href="style.css" rel="stylesheet" type="text/css" />
   </head>
   <body>
-    <h1>Assignment 1: Blink!</h1>
+    <h1>Assignment 5: Transistors!</h1>
     <div class="header">
       <p>
-        This page documents Assignment 1: Blink. The goal of this assignment
-        was to design a circuit with multiple LEDs, write Arduino firmware to make
-        them blink independently, and explain the design decisions behind the circuit.
+        This page documents Assignment 5. The goal of this assignment was to design a
+        circuit that responds to a remote input using an external Arduino library.
+        The project uses an IR receiver to detect button presses and control LEDs through
+        PWM output, allowing the lights to turn off or flash repeatedly depending on
+        user interaction.
       </p>
       <br><br>
       <br><br>
@@ -24,11 +26,12 @@
     <!-- Schematic Section -->
     <!-- ===================== -->
     <h2>Schematic</h2>
-    <img src="a1schematic.webp" />
+    <img src="a5schematic.webp" />
     <p>
-      This schematic shows the Arduino connected to three LEDs, each with its own
-      resistor. Separate digital pins are used so that each LED
-      can be controlled independently.
+      This schematic shows the Arduino connected to an IR receiver module and an LED
+      output circuit with a resistor. The receiver provides 
+      digital input signals, while the LED is connected to a PWM-capable pin so that
+      brightness can be controlled using analogWrite().
     </p>
     <br><br>
 
@@ -36,11 +39,9 @@
     <!-- Circuit Photo Section -->
     <!-- ===================== -->
     <h2>Circuit on Breadboard</h2>
-    <img src="a1circuit.webp" />
+    <img src="a5circuit.webp" />
     <p>
       This image shows the physical implementation of the circuit on a breadboard.
-      Each LED is placed in series with a resistor, and all components share a common
-      ground connected to the Arduino.
     </p>
     <br><br>
 
@@ -49,43 +50,83 @@
     <!-- ===================== -->
     <h2>Arduino Firmware</h2>
     <p>
-      Below is the Arduino code used to blink each LED independently. Each line of
-      code is commented to explain its function.
+      Below is the Arduino code used to decode remote control signals and change the
+      LED behavior. One button disables the light output, while another activates a
+      repeating flashing pattern controlled with PWM.
     </p>
     <pre>
 <code>
-// Define the pin number for the first LED
-int led1 = 13;
+#include <IRremote.hpp>
 
-// Define the pin number for the second LED
-int led2 = 12;
+// Store the pin connected to the IR receiver 
+const int IRreceiverPin = 8;
 
-// Define the pin number for the third LED
-int led3 = 11;
+// Store the pin connected to the LEDs
+const int LEDsPin = 9;
+
+// Track whether flashing  is enabled
+bool flashMode = false;
+
+// Store current brightness level
+int brightness = 0;
+
 
 void setup() {
-  // initialize digital pin led1 as an output.
-  pinMode(led1, OUTPUT);
-    // initialize digital pin led2 as an output.
-  pinMode(led2, OUTPUT);
-    // initialize digital pin led3 as an output.
-  pinMode(led3, OUTPUT);
+
+  // Initialize the IR receiver and enable onboard feedback LED
+  IrReceiver.begin(IRreceiverPin, ENABLE_LED_FEEDBACK);
+
+  // Configure LED pin
+  pinMode(LEDsPin, OUTPUT);
 }
 
-// the loop function runs over and over again forever
 void loop() {
-  digitalWrite(led1, HIGH);  // turn the first LED on (HIGH is the voltage level)
-  delay(500);                      // wait for a second
-  digitalWrite(led1, LOW);   // turn the first LED off by making the voltage LOW
-  delay(200);                      // wait for a second
-  digitalWrite(led2, HIGH);  // turn the second LED on (HIGH is the voltage level)
-  delay(300);                      // wait for a second
-  digitalWrite(led2, LOW);   // turn the second LED off by making the voltage LOW
-  delay(200);                      // wait for a second
-  digitalWrite(led3, HIGH);  // turn the third LED on (HIGH is the voltage level)
-  delay(1000);                      // wait for a second
-  digitalWrite(led3, LOW);   // turn the third LED off by making the voltage LOW
-  delay(50);
+
+  // Check if a new  signal has been detected
+  if (IrReceiver.decode()) {
+
+    // If remote button 1 is detected
+    if (IrReceiver.decodedIRData.decodedRawData == 0xF30CFF00) {
+
+      // Enable flashing 
+      flashMode = true;
+    }
+
+    // If remote button 0 is detected
+    if (IrReceiver.decodedIRData.decodedRawData == 0xE916FF00) {
+
+      // Disable flashing 
+      flashMode = false;
+
+      // Turn LEDs off
+      brightness = 0;
+
+      // Apply the value to the LEDs
+      analogWrite(LEDsPin, brightness);
+    }
+
+    // Reset receiver to listen for the next command
+    IrReceiver.resume();
+  }
+
+
+  // Do blinking pattern when flash mode is active
+  if (flashMode == true) {
+
+    // Toggle brightness between fully on and fully off
+    if (brightness == 0) {
+      brightness = 255;
+    }
+    else {
+      brightness = 0;
+    }
+
+    // Send  brightness value to LED pin
+    analogWrite(LEDsPin, brightness);
+
+    // Pause to control flashing
+    delay(300);
+  }
 }
     </code>
     </pre>
@@ -94,22 +135,9 @@ void loop() {
     <!-- Animated GIF Section -->
     <!-- ===================== -->
     <h2>Circuit Operation</h2>
-    <img src="a1gif.gif" />
+    <img src="a5gif.gif" />
     <p>
-      This animated GIF demonstrates the circuit in operation. Each LED blinks at
-      a different rate, showing that they are controlled independently.
-    </p>
-    <br><br>
-
-    <!-- ===================== -->
-    <!-- Voltage vs Time Graph -->
-    <!-- ===================== -->
-    <h2>Voltage vs. Time Graph</h2>
-    <img src="a1graph.webp" />
-    <p>
-      This graph shows voltage across each LED over time. When an LED is on, the
-      voltage rises to its forward voltage, and when off, the voltage drops to zero.
-      Each LED has a distinct timing pattern.
+      This animated GIF demonstrates the circuit in operation.
     </p>
     <br><br>
 
@@ -118,20 +146,47 @@ void loop() {
     <!-- ===================== -->
     <h2>Additional Questions</h2>
 
-    <h3>How many LEDs could you blink independently?</h3>
+    <h3>1: MOSFET Maximum Current</h3>
     <p>
-      10 LEDs safely blinking independently using an Arduino Uno, with a current 
-      of ~20mA per LED and appropriate resistors to limit current. This results in 
-      a total current draw of around 200mA, which is within the Arduino's limits.
+      The MOSFET used in this project must be identified by reading the label printed on it. 
+      We have an IRLZ44N, therefore the maximum continuous drain current (between pins 2 and 3) is 47 Amps.
+      This is assuming a contant temperature of 25 degrees Celsius.
     </p>
     <br><br>
 
-    <h3>How fast must LEDs blink before blinking is no longer visible?</h3>
+    <h3>2: Motor Driver Circuit Schematic</h3>
+    <img src="a5q1.webp" />
+    <br><br>
+
+    <h3>3: Dual Motor Control Using L293D</h3>
     <p>
-      Due to testing I preformed with different blink rates, I found that
-      it would require blinking every 0.004 seconds (4 milliseconds) for the
-      blinking to no longer be visible to the human eye.
+      Pseudocode for controlling motion:
+      <br><br>
+      Move both forward:<br>
+      set Motor1InputA HIGH<br>
+      set Motor1InputB LOW<br>
+      set Motor2InputA HIGH<br>
+      set Motor2InputB LOW<br><br>
+
+      Move both backward:<br>
+      set Motor1InputA LOW<br>
+      set Motor1InputB HIGH<br>
+      set Motor2InputA LOW<br>
+      set Motor2InputB HIGH<br><br>
+
+      One forward, one backward:<br>
+      set Motor1InputA HIGH<br>
+      set Motor1InputB LOW<br>
+      set Motor2InputA LOW<br>
+      set Motor2InputB HIGH<br><br>
+
+      Reverse combination:<br>
+      set Motor1InputA LOW<br>
+      set Motor1InputB HIGH<br>
+      set Motor2InputA HIGH<br>
+      set Motor2InputB LOW
     </p>
+    <img src="a5q2.webp" />
 
   </body>
 </html>
