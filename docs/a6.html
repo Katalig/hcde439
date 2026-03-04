@@ -4,19 +4,23 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, maximum-scale=1.0" />
     
-    <title>Kai Atalig – Assignment 1: Blink!</title>
+    <title>Kai Atalig – Assignment 6: Talking with the Web!</title>
 
     <link href="style.css" rel="stylesheet" type="text/css" />
   </head>
+
   <body>
-    <h1>Assignment 1: Blink!</h1>
+    <h1>Assignment 6: Talking with the Web!</h1>
+
     <div class="header">
       <p>
-        This page documents Assignment 1: Blink. The goal of this assignment
-        was to design a circuit with multiple LEDs, write Arduino firmware to make
-        them blink independently, and explain the design decisions behind the circuit.
+        This page documents Assignment 6. The goal of this assignment was to create
+        a webpage that communicates with an Arduino using WebSerial.
+        The joystick and button connected to the Arduino send real-time input
+        data to the webpage, while the webpage sends output commands back to the
+        Arduino to control an LED. The project demonstrates interactive control
+        between the digital interface and physical hardware.
       </p>
-      <br><br>
       <br><br>
     </div>
 
@@ -24,11 +28,12 @@
     <!-- Schematic Section -->
     <!-- ===================== -->
     <h2>Schematic</h2>
-    <img src="a1schematic.webp" />
+    <img src="a6schematic.webp" />
     <p>
-      This schematic shows the Arduino connected to three LEDs, each with its own
-      resistor. Separate digital pins are used so that each LED
-      can be controlled independently.
+      This schematic shows the Arduino connected to a two-axis joystick (analog inputs A0 and A1),
+      a button (digital input), and an LED connected to a digital output pin. The joystick provides 
+      two analog input values (0–1023),while the button provides a digital signal. The LED receives 
+      output commands sent from the webpage.
     </p>
     <br><br>
 
@@ -36,11 +41,9 @@
     <!-- Circuit Photo Section -->
     <!-- ===================== -->
     <h2>Circuit on Breadboard</h2>
-    <img src="a1circuit.webp" />
+    <img src="a6circuit.webp" />
     <p>
-      This image shows the physical implementation of the circuit on a breadboard.
-      Each LED is placed in series with a resistor, and all components share a common
-      ground connected to the Arduino.
+      This image shows the physical implementation of the circuit.
     </p>
     <br><br>
 
@@ -49,89 +52,259 @@
     <!-- ===================== -->
     <h2>Arduino Firmware</h2>
     <p>
-      Below is the Arduino code used to blink each LED independently. Each line of
-      code is commented to explain its function.
+      The firmware reads joystick and button input values and sends them to the webpage
+      in CSV format over serial communication. It also listens for incoming commands
+      from the webpage to toggle the LED on or off.
     </p>
     <pre>
 <code>
-// Define the pin number for the first LED
-int led1 = 13;
+// Store pin used for joystick X-axis
+const int xAxis = A1;
 
-// Define the pin number for the second LED
-int led2 = 12;
+// Store pin used for joystick Y-axis
+const int yAxis = A0;
 
-// Define the pin number for the third LED
-int led3 = 11;
+// Store pin used for LED 
+const int LED = 11;
+
+// Store pin used for button 
+const int buttonPin = 2;
 
 void setup() {
-  // initialize digital pin led1 as an output.
-  pinMode(led1, OUTPUT);
-    // initialize digital pin led2 as an output.
-  pinMode(led2, OUTPUT);
-    // initialize digital pin led3 as an output.
-  pinMode(led3, OUTPUT);
+
+  // Start serial communication at 9600
+  Serial.begin(9600);
+
+  // Configure LED pin as an output
+  pinMode(LED, OUTPUT);
+
+  // Configure button pin as input with internal pull-up resistor
+  pinMode(buttonPin, INPUT_PULLUP);
 }
 
-// the loop function runs over and over again forever
+
+// Main loop runs continuously
 void loop() {
-  digitalWrite(led1, HIGH);  // turn the first LED on (HIGH is the voltage level)
-  delay(500);                      // wait for a second
-  digitalWrite(led1, LOW);   // turn the first LED off by making the voltage LOW
-  delay(200);                      // wait for a second
-  digitalWrite(led2, HIGH);  // turn the second LED on (HIGH is the voltage level)
-  delay(300);                      // wait for a second
-  digitalWrite(led2, LOW);   // turn the second LED off by making the voltage LOW
-  delay(200);                      // wait for a second
-  digitalWrite(led3, HIGH);  // turn the third LED on (HIGH is the voltage level)
-  delay(1000);                      // wait for a second
-  digitalWrite(led3, LOW);   // turn the third LED off by making the voltage LOW
-  delay(50);
+
+  // Read joystick X-axis value
+  int xVal = analogRead(xAxis);
+
+  // Read joystick Y-axis value
+  int yVal = analogRead(yAxis);
+
+  // Read button state
+  int buttonState = digitalRead(buttonPin);
+
+  // Send X value to webpage
+  Serial.print(xVal);
+
+  // Send comma separator
+  Serial.print(",");
+
+  // Send Y value to webpage
+  Serial.print(yVal);
+
+  // Send comma separator
+  Serial.print(",");
+
+  // Send button state and end line
+  Serial.println(buttonState);
+
+
+  // Check if webpage has sent data to Arduino
+  if (Serial.available() > 0) {
+
+    // Read incoming character from serial buffer
+    char ledState = Serial.read();
+
+    // If webpage sends '1', turn LED on
+    if (ledState == '1') {
+      digitalWrite(LED, HIGH);
+    }
+
+    // If webpage sends '0', turn LED off
+    else if (ledState == '0') {
+      digitalWrite(LED, LOW);
+    }
+  }
+
+  // Small delay to stabilize serial communication
+  delay(20);
 }
-    </code>
+</code>
     </pre>
 
     <!-- ===================== -->
-    <!-- Animated GIF Section -->
+    <!-- p5.js Code Section -->
     <!-- ===================== -->
-    <h2>Circuit Operation</h2>
-    <img src="a1gif.gif" />
+    <h2>Webpage (p5.js + WebSerial Code)</h2>
     <p>
-      This animated GIF demonstrates the circuit in operation. Each LED blinks at
-      a different rate, showing that they are controlled independently.
+      The webpage uses p5.js and WebSerial to receive joystick and button data from
+      the Arduino. The joystick controls the position of a black circle on screen,
+      while the Arduino pushbutton cycles through red, blue, and green background colors.
+      Mouse clicks on the webpage send commands back to the Arduino to toggle the LED.
+    </p>
+    <pre>
+<code>
+// Store baud rate to match Arduino sketch
+const BAUD_RATE = 9600;
+
+// Create variable to store serial object
+let serial;
+
+// Create variable for connect button
+let portButton;
+
+// Store joystick-controlled position
+let xPos = 200;
+let yPos = 200;
+
+// Store latest button state from Arduino
+let buttonState = 1;
+
+// Store previous button state to detect press event
+let lastButtonState = 1;
+
+// Track LED state being sent to Arduino
+let ledOn = false;
+
+// Track which background color is active
+let colorMode = 0;
+
+
+// Runs once at program start
+function setup() {
+
+  // Create canvas that fills entire browser window
+  createCanvas(windowWidth, windowHeight);
+
+  // Initialize WebSerial
+  serial = createSerial();
+
+  // Create connect button
+  portButton = createButton('Connect Arduino');
+
+  // Position connect button near top-left corner
+  portButton.position(20, 20);
+
+  // Run connect function when button pressed
+  portButton.mousePressed(connectPort);
+}
+
+
+// Runs continuously
+function draw() {
+
+  // Set background color based on colorMode value
+  if (colorMode == 0) {
+    background('red');
+  } 
+  else if (colorMode == 1) {
+    background('blue');
+  } 
+  else {
+    background('green');
+  }
+
+  // Check if serial data is available
+  if (serial.available() > 0) {
+
+    // Read one full line from serial buffer
+    let data = serial.readUntil('\n');
+
+    // Print raw data for debugging
+    console.log(data);
+
+    // If data exists
+    if (data) {
+
+      // Split CSV string into array
+      let sensors = split(trim(data), ',');
+
+      // Confirm we received x, y, and button
+      if (sensors.length == 3) {
+
+        // Map joystick X value (0–1023) to full window width
+        xPos = map(int(sensors[0]), 0, 1023, width, 0);
+
+        // Map joystick Y value (0–1023) to full window height
+        yPos = map(int(sensors[1]), 0, 1023, height, 0);
+
+        // Store button state (0 when pressed)
+        buttonState = int(sensors[2]);
+
+        // Detect button press transition (HIGH → LOW)
+        if (lastButtonState == 1 && buttonState == 0) {
+
+          // Cycle to next background color
+          colorMode++;
+
+          // Keep colorMode within 0–2 range
+          if (colorMode > 2) {
+            colorMode = 0;
+          }
+        }
+
+        // Update last button state
+        lastButtonState = buttonState;
+      }
+    }
+  }
+
+  // Draw black circle controlled by joystick
+  fill(0);
+  ellipse(xPos, yPos, 30, 30);
+}
+
+
+
+// Sends LED control to Arduino
+function mousePressed() {
+
+  // Toggle LED state
+  ledOn = !ledOn;
+
+  // If LED should turn on
+  if (ledOn) {
+
+    // Send character '1' to Arduino
+    serial.write('1');
+
+  } else {
+
+    // Send character '0' to Arduino
+    serial.write('0');
+  }
+}
+
+
+// Connect to Arduino through WebSerial
+function connectPort() {
+
+  // If serial is not already open
+  if (!serial.opened()) {
+
+    // Open serial connection at matching baud rate
+    serial.open(BAUD_RATE);
+
+    // Hide connect button once connected
+    portButton.hide();
+  }
+}
+</code>
+    </pre>
+
+    <!-- ===================== -->
+    <!-- Gif Section -->
+    <!-- ===================== -->
+    <h2>System Operation</h2>
+    <img src="a6gif.gif" />
+    <p>
+      This animation demonstrates the system in action. Moving the joystick changes
+      the position of the circle on screen. Pressing the Arduino button cycles the
+      background color. Clicking the webpage toggles the LED connected to the Arduino.
     </p>
     <br><br>
-
-    <!-- ===================== -->
-    <!-- Voltage vs Time Graph -->
-    <!-- ===================== -->
-    <h2>Voltage vs. Time Graph</h2>
-    <img src="a1graph.webp" />
-    <p>
-      This graph shows voltage across each LED over time. When an LED is on, the
-      voltage rises to its forward voltage, and when off, the voltage drops to zero.
-      Each LED has a distinct timing pattern.
-    </p>
-    <br><br>
-
-    <!-- ===================== -->
-    <!-- Additional Questions -->
-    <!-- ===================== -->
-    <h2>Additional Questions</h2>
-
-    <h3>How many LEDs could you blink independently?</h3>
-    <p>
-      10 LEDs safely blinking independently using an Arduino Uno, with a current 
-      of ~20mA per LED and appropriate resistors to limit current. This results in 
-      a total current draw of around 200mA, which is within the Arduino's limits.
-    </p>
-    <br><br>
-
-    <h3>How fast must LEDs blink before blinking is no longer visible?</h3>
-    <p>
-      Due to testing I preformed with different blink rates, I found that
-      it would require blinking every 0.004 seconds (4 milliseconds) for the
-      blinking to no longer be visible to the human eye.
-    </p>
 
   </body>
 </html>
