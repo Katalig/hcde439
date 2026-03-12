@@ -39,40 +39,36 @@ p {
 <h1>Final Project: GuidingLight!</h1>
 
 <div class="header">
+<h2>Proposal</h2>
+<br>
 <img src="FinalProposal.png" width="800px">
 </div>
-
+<br>
+<h2>Final Build</h2>
 <img src="finalbox.webp" width="400px">
 
 <h2>Concept</h2>
 <p>
 GuidingLight is an interactive navigation system that uses a joystick to
-select directional signals that are then converted into color feedback and
-motion. The project simulates a system that could guide a user through
-directions or decisions by translating directional input into visual and
-physical feedback.
+select directional signals that are then converted into colored lighting and
+motion. The project is a system that could guide a user through
+directions or decisions by translating input into visual feedback.
 </p>
 
 <p>
 The joystick acts as the primary input device. Moving the joystick in
 different directions activates LEDs that represent those directions.
-Pressing a secondary button allows the currently active LED directions to be
-"locked" on, storing the user's selections. When the activation button is
-pressed, the system reads the locked LEDs and translates them into a color
-display using an RGB LED. The RGB LED blends the selected colors together,
+Pressing a "select" button allows the currently active LED directions to be
+"locked" on, storing the user's selections. When the "On/Off" button is
+pressed, the system reads the activated LEDs and translates them into a color
+display using a multicolored LED. This LED blends the selected colors together,
 creating combinations such as purple when both red and blue are active.
 </p>
 
 <p>
 If the user had selected the white direction (up), the system additionally
-activates a servo motor which sweeps back and forth. This movement represents
-the system entering an "active guiding" state. Pressing the activation button
-again resets the system, turning off the RGB LED and stopping the servo.
-</p>
-
-<p>
-The project demonstrates how multiple inputs, stored states, and outputs can
-be combined to create an interactive physical interface.
+activates a servo motor which sweeps back and forth. Pressing the "On/Off" button
+again resets the system, turning off the LED and stopping the servo.
 </p>
 
 
@@ -82,11 +78,10 @@ be combined to create an interactive physical interface.
 <img src="finalschematic.webp" width="500px">
 
 <p>
-The schematic shows the Arduino connected to a joystick module, four LEDs
+The schematic shows the Arduino connected to a joystick, four LEDs
 representing directional inputs, an RGB LED for blended color output,
-two push buttons, and a servo motor. Each LED uses a current limiting resistor.
-The joystick provides two analog signals for X and Y movement and a digital
-signal for its push button.
+two buttons, and a servo motor. Each LED and button uses a resistor.
+The joystick provides two analog signals for X and Y movement.
 </p>
 
 
@@ -101,21 +96,21 @@ signal for its push button.
 </div>
 
 <p>
-The circuit was constructed on a breadboard using an Arduino Uno. The
+The circuit was constructed on a breadboard using an Arduino. The
 joystick's X and Y axes connect to analog pins A1 and A0, allowing the
 program to read directional movement. Four LEDs represent the directions:
-blue for left, red for down, green for right, and white for up.
+blue for left, red for right, green for down, and white for up.
 </p>
 
 <p>
-A separate RGB LED provides color feedback by blending the red, green, and
+A separate multicolored LED provides color feedback by blending the red, green, and
 blue channels. These channels are connected to PWM pins on the Arduino so
 that the brightness of each channel can be controlled using analogWrite().
 </p>
 
 <p>
-Two push buttons are used in the system. The LED lock button stores the
-current directional selections, while the activate button triggers the RGB
+Two push buttons are used in the system. The LED select button stores the
+current directional selections, while the activate button triggers the multicolored
 display and optionally the servo motor. The servo motor connects to pin 9
 and is powered directly through the Arduino.
 </p>
@@ -347,7 +342,7 @@ LEDs turns on to indicate the direction selected.
 </p>
 
 <p>
-Pressing the LED lock button saves the currently active directions so they
+Pressing the LED select button saves the currently active directions so they
 remain illuminated even when the joystick returns to the center position.
 This allows multiple directions to be combined.
 </p>
@@ -355,16 +350,15 @@ This allows multiple directions to be combined.
 <p>
 When the activate button is pressed, the program reads which directional
 LEDs were active or locked. These directions correspond to the red, green,
-and blue channels of the RGB LED. The system then activates the RGB LED by
+and blue channels of the multicolored LED. The system then activates the multicolored LED by
 turning on the appropriate channels, creating blended colors if multiple
 channels are active.
 </p>
 
 <p>
 If the white direction (up) was selected before activation, the servo motor
-begins sweeping back and forth. This indicates that the system has entered
-its active guidance state. Pressing the activate button again resets the
-system by turning off the RGB LED and stopping the servo.
+begins sweeping back and forth. Pressing the activate button again resets the
+system by turning off the multicolored LED and stopping the servo.
 </p>
 
 
@@ -378,7 +372,7 @@ allowfullscreen>
 
 <p>
 This demo video shows the joystick controlling directional LEDs, locking
-multiple directions, activating the RGB color blending, and triggering the
+multiple directions, activating the multicolored LED blending, and triggering the
 servo motor when the white direction is selected.
 </p>
 
